@@ -54,14 +54,8 @@ namespace NewReversedPolish
         };
         public static string ReversedPolish(string equation)
         {
-            if (equation.CharCount('(') != equation.CharCount(')'))
-            {
-                Console.WriteLine("Quantity of opening and closing brackets inconsistent.");
-                return "";
-            }
             Stack<char> digits = new Stack<char>();
-            Stack<char> operators = new Stack<char>();
-            Stack<int> numbers = new Stack<int>();
+            CppStack<char> operators = new CppStack<char>();
             StringBuilder sb = new StringBuilder();
             Func<char, bool> isOperator = (c) =>
             {
@@ -78,8 +72,7 @@ namespace NewReversedPolish
             };
             Func<Func<char, bool>, string> popOperators = (condition) =>
             {
-                StringBuilder addition = new StringBuilder();
-                //string addition = "";
+                string addition = "";
                 char op = ')';
                 List<char> ops = new List<char>();
                 while (condition(op))
@@ -91,45 +84,11 @@ namespace NewReversedPolish
                     }
                 }
                 ops.Reverse();
-                //Comparison<char> comp = (a, b) =>
-                //{
-                //    int op1 = (int)Char_To_Operator[a];
-                //    int op2 = (int)Char_To_Operator[b];
-                //    return op1 > op2 ? 1 : -1;
-                //};
-                //ops.Sort(comp);
                 foreach (char o in ops)
                 {
-                    addition.Append(o + " ");
-                    //addition += o + " ";
+                    addition += o + " ";
                 }
-                return addition.ToString();
-            };
-            Action<Func<char,bool>> appendNumbersAndOperators = (condition) =>
-            {
-                char opp2 = 'C';
-                while (condition(opp2))
-                {
-                    opp2 = operators.Pop();
-                    int quantity = Quantities[Char_To_Operator[opp2]];
-                    string addition = "";
-                    for (int j = 0; j < quantity; j++)
-                    {
-                        if (numbers.Count > 0)
-                        {
-                            addition = numbers.Pop() + " " + addition;
-                            //sb.Append(numbers.Pop() + " ");
-                        }
-                    }
-
-                    if (opp2 != '(' && opp2 != ')')
-                    {
-                        addition = opp2 + " " + addition;
-                        //sb.Append(opp + " ");
-                    }
-                    sb.Append(addition);
-                }
-                sb.Append(" ");
+                return addition;
             };
             for (int i = 0; i < equation.Length; i++)
             {
@@ -139,28 +98,34 @@ namespace NewReversedPolish
                 }
                 else
                 {
-                    int num;
-                    if (int.TryParse(popDigits(), out num))
-                    {
-                        numbers.Push(num);
-                        //sb.Append(popDigits() + " ");
-                    }
+                    sb.Append(popDigits() + " ");
                 }
                 if (isOperator(equation[i]))
                 {
+                    int currentPrecedence = (int)Char_To_Operator[equation[i]];
+                    if (operators.Count > 0)
+                    {
+                        while(currentPrecedence < (int)Char_To_Operator[operators.Top()])
+                        {
+                            sb.Append(operators.Pop() + " ");
+                            if (operators.Count < 1)
+                            {
+                                break;
+                            }
+                        }
+                    }
                     operators.Push(equation[i]);
                     if (equation[i] == ')')
                     {
-                        //sb.Append(popOperators((c) => { return c != '(' && operators.Count > 0; }) + " ");
-                        appendNumbersAndOperators((c) => { return c != '(' && operators.Count > 0; });
+                        sb.Append(popOperators((c) => { return c != '(' && operators.Count > 0; }) + " ");
                     }
                 }
             }
             sb.Append(popDigits() + " ");
-            appendNumbersAndOperators((c) => { return operators.Count > 0; });
-            //sb.Append(popOperators((c) => { return operators.Count > 0; }));
+            sb.Append(popOperators((c) => { return operators.Count > 0; }));
             return sb.ToString();
         }
+     
         public static int GetAnswer(string reversedPolish)
         {
             List<string> segments = reversedPolish.Split(' ').ToList();
@@ -172,7 +137,6 @@ namespace NewReversedPolish
                     i--;
                 }
             }
-
             Stack<int> numbers = new Stack<int>();
             Func<int> getNum = () =>
             {
@@ -243,4 +207,143 @@ namespace NewReversedPolish
             return count;
         }
     }
+    public class CppStack<T> : Stack<T>
+    {
+        public T Top()
+        {
+            T val = Pop();
+            Push(val);
+            return val;
+        }
+    }
 }
+//public static string ReversedPolish(string equation)
+//{
+//    if (equation.CharCount('(') != equation.CharCount(')'))
+//    {
+//        Console.WriteLine("Quantity of opening and closing brackets inconsistent.");
+//        return "";
+//    }
+//    Stack<char> digits = new Stack<char>();
+//    Stack<char> operators = new Stack<char>();
+//    Stack<int> numbers = new Stack<int>();
+//    StringBuilder sb = new StringBuilder();
+//    Func<char, bool> isOperator = (c) =>
+//    {
+//        return Char_To_Operator.ContainsKey(c);
+//    };
+//    Func<string> popDigits = () =>
+//    {
+//        string number = "";
+//        while (digits.Count > 0)
+//        {
+//            number = digits.Pop() + number;
+//        }
+//        return number;
+//    };
+//    Func<Func<char, bool>, string> popOperators = (condition) =>
+//    {
+//        StringBuilder addition = new StringBuilder();
+//        //string addition = "";
+//        char op = ')';
+//        List<char> ops = new List<char>();
+//        while (condition(op))
+//        {
+//            op = operators.Pop();
+//            if (op != '(' && op != ')')
+//            {
+//                ops.Add(op);
+//            }
+//        }
+//        ops.Reverse();
+//        //Comparison<char> comp = (a, b) =>
+//        //{
+//        //    int op1 = (int)Char_To_Operator[a];
+//        //    int op2 = (int)Char_To_Operator[b];
+//        //    return op1 > op2 ? 1 : -1;
+//        //};
+//        //ops.Sort(comp);
+//        foreach (char o in ops)
+//        {
+//            addition.Append(o + " ");
+//            //addition += o + " ";
+//        }
+//        return addition.ToString();
+//    };
+//    Action<Func<char,bool>> appendNumbersAndOperators = (condition) =>
+//    {
+//        char opp2 = 'C';
+//        Stack<char> readds = new Stack<char>();
+//        string addition = "";
+//        while (condition(opp2))
+//        {
+//            opp2 = operators.Pop();
+//            int quantity = Quantities[Char_To_Operator[opp2]];
+
+//            if (numbers.Count >= quantity)
+//            {
+//                for (int j = 0; j < quantity; j++)
+//                {
+//                    if (numbers.Count > 0)
+//                    {
+//                        addition = numbers.Pop() + " " + addition;
+//                        //sb.Append(numbers.Pop() + " ");
+//                    }
+//                }
+
+//                if (opp2 != '(' && opp2 != ')')
+//                {
+//                    addition = opp2 + " " + addition;
+//                    //sb.Append(opp + " ");
+//                }
+
+
+//            }
+//            else
+//            {
+//                readds.Push(opp2);
+//            }
+//        }
+//        while(readds.Count > 0)
+//        {
+//            operators.Push(readds.Pop());
+//        }
+
+//        sb.Append(addition+" ");
+//    };
+//    for (int i = 0; i < equation.Length; i++)
+//    {
+//        if (Char.IsDigit(equation[i]))
+//        {
+//            digits.Push(equation[i]);
+//        }
+//        else
+//        {
+//            int num;
+//            if (int.TryParse(popDigits(), out num))
+//            {
+//                numbers.Push(num);
+//                //sb.Append(popDigits() + " ");
+//            }
+//        }
+//        if (isOperator(equation[i]))
+//        {
+//            operators.Push(equation[i]);
+//            if (equation[i] == ')')
+//            {
+//                string nums = "";
+//                while(numbers.Count > 0)
+//                {
+//                    nums = numbers.Pop() + nums;
+//                }
+//                sb.Append(nums+" ");
+//                sb.Append(popOperators((c) => { return c != '(' && operators.Count > 0; }) + " ");
+//                //appendNumbersAndOperators((c) => { return c != '(' && operators.Count > 0; });
+//            }
+//        }
+//    }
+//    sb.Append(popDigits() + " ");
+//    //appendNumbersAndOperators((c) => { return operators.Count > 0; });
+//    sb.Append(popOperators((c) => { return operators.Count > 0; }));
+//    return sb.ToString();
+//}
